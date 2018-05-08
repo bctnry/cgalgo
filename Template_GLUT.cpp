@@ -11,7 +11,10 @@
 #include<GL/glu.h>
 #include<GL/freeglut.h>
 
+#include<stdio.h>
+
 void init() {
+    // your initialization stuff goes here
     glClearColor(1.0, 1.0, 1.0, 1.0);
     glColor3f(1.0, 0.0, 0.0);
     glPointSize(2.0);
@@ -24,7 +27,44 @@ void init() {
     glMatrixMode(GL_MODELVIEW);
 }
 
-void display() {
+// window reshape handling
+void onReshape(int width, int height) {
+    // on reshape callback.
+    static int prevWidth = 0, prevHeight = 0;
+    printf("Reshaped to %dx%d!\n", width, height);
+    prevWidth = width, prevHeight = height;
+}
+
+
+// mouse motion handling.
+static int prevX = 0, prevY = 0;
+void onDrag(int x, int y) {
+    // on drag callback.
+    printf("Dragged from %d %d to %d %d!\n", prevX, prevY, x, y);
+    prevX = x, prevY = y;
+}
+
+void onMouseMove(int x, int y) {
+    // on mousemove callback.
+    printf("Moved from %d %d to %d %d!\n", prevX, prevY, x, y);
+    prevX = x, prevY = y;
+}
+
+
+// keyboard handling.
+void onKey(unsigned char key, int x, int y) {
+    int modifiers = glutGetModifiers();
+    // check using GLUT_ACTIVE_SHIFT/CTRL/ALT.
+    printf("Key %c pressed with modifier%s%s%s!\n",
+           key,
+           modifiers&GLUT_ACTIVE_SHIFT?" SHIFT":"",
+           modifiers&GLUT_ACTIVE_CTRL?" CTRL":"",
+           modifiers&GLUT_ACTIVE_ALT?" ALT":"");
+}
+
+
+// the main display callback.
+void onDisplay() {
     GLfloat vertices[3][2] = {{0.0, 0.0}, {25.0, 50.0}, {50.0, 0.0}};
     int i, j, k;
     int rand();
@@ -48,7 +88,11 @@ int main(int argc, char* argv[]) {
     glutInitWindowSize(640, 480);
     glutInitWindowPosition(0, 0);
     glutCreateWindow("test");
-    glutDisplayFunc(display);
+    glutDisplayFunc(onDisplay);
+    glutReshapeFunc(onReshape);
+    glutMotionFunc(onDrag);
+    glutPassiveMotionFunc(onMouseMove);
+    glutKeyboardFunc(onKey);
     init();
     glutMainLoop();
     return 0;
