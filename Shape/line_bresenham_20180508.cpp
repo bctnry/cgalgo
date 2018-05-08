@@ -13,51 +13,76 @@
 
 #include<stdio.h>
 
+
+static const int WINDOW_WIDTH = 640;
+static const int WINDOW_HEIGHT = 480;
+
+void drawline(int, int, int, int);
+
 void init() {
     // your initialization stuff goes here
     glClearColor(1.0, 1.0, 1.0, 1.0);
     glColor3f(1.0, 0.0, 0.0);
-    glPointSize(2.0);
+    glPointSize(1.0);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     // this defines the axes.
-    // x : [0.0, 100.0], y : [0.0, 100.0]
+    // x : [0.0, window_width], y : [0.0, window_height]
     // start from the bottom-left corner and goes to the top-right.
-    gluOrtho2D(0.0, 100.0, 0.0, 100.0);
+    gluOrtho2D(0.0, WINDOW_WIDTH, 0.0, WINDOW_HEIGHT);
     glMatrixMode(GL_MODELVIEW);
+}
+
+void clear() {
+    glClearColor(1.0, 1.0, 1.0, 1.0);
+    glClear(GL_COLOR_BUFFER_BIT);
 }
 
 // window reshape handling
 void onReshape(int width, int height) {
     // on reshape callback.
     static int prevWidth = 0, prevHeight = 0;
-    printf("Reshaped to %dx%d!\n", width, height);
     prevWidth = width, prevHeight = height;
 }
 
+// for keep tracking mouse positions.
+static int lastX = 0, lastY = 0;
 
 // mouse motion handling.
 static int prevX = 0, prevY = 0;
 void onDrag(int x, int y) {
     // on drag callback.
-    printf("Dragged from %d %d to %d %d!\n", prevX, prevY, x, y);
+    y = WINDOW_HEIGHT - y;
+    
+    // clear window
+    clear();
+
+    // drawline
+    drawline(lastX, lastY, x, y);
+
+    // flush.
+    glFlush();
+    
     prevX = x, prevY = y;
 }
 
 void onMouseMove(int x, int y) {
     // on mousemove callback.
-    printf("Moved from %d %d to %d %d!\n", prevX, prevY, x, y);
     prevX = x, prevY = y;
 }
 
 // mouse handling.
 void onMouse(int button, int state, int x, int y) {
     char
-        left = button&GLUT_LEFT_BUTTON,
         right = button&GLUT_RIGHT_BUTTON,
         mid = button&GLUT_MIDDLE_BUTTON,
-        holddown = state&GLUT_DOWN,
-        release = state&GLUT_UP;
+        left = (!right)&&(!mid),
+        release = state&GLUT_UP,
+        holddown = (!release);
+    y = WINDOW_HEIGHT - y;
+    if((!right)&&(!mid)&&(!release)) { // left click
+        lastX = x, lastY = y;
+    }
 }
 
 
@@ -65,31 +90,24 @@ void onMouse(int button, int state, int x, int y) {
 void onKey(unsigned char key, int x, int y) {
     int modifiers = glutGetModifiers();
     // check using GLUT_ACTIVE_SHIFT/CTRL/ALT.
-    printf("Key %c pressed with modifier%s%s%s!\n",
-           key,
-           modifiers&GLUT_ACTIVE_SHIFT?" SHIFT":"",
-           modifiers&GLUT_ACTIVE_CTRL?" CTRL":"",
-           modifiers&GLUT_ACTIVE_ALT?" ALT":"");
+}
+
+
+// drawline func.
+void drawline(int x1, int y1, int x2, int y2) {
+    // TODO: change this to bresenham.
+    glBegin(GL_LINES); {
+        glVertex2f(x1, y1);
+        glVertex2f(x2, y2);
+    } glEnd();
 }
 
 
 // the main display callback.
 void onDisplay() {
-    GLfloat vertices[3][2] = {{0.0, 0.0}, {25.0, 50.0}, {50.0, 0.0}};
-    int i, j, k;
-    int rand();
-    GLfloat p[2] = {7.5, 5.0};
-    glClear(GL_COLOR_BUFFER_BIT);
-
-    glBegin(GL_POINTS);
-    for(k = 0; k < 5000; k++) {
-        j = rand() % 3;
-        p[0] = (p[0] + vertices[j][0]) / 2.0;
-        p[1] = (p[1] + vertices[j][1]) / 2.0;
-        glVertex2fv(p);
-    }
-    glEnd();
-    glFlush();
+    // the whole display is controlled by the drawline func
+    // so nothing to do here.
+    clear();
 }
 
 int main(int argc, char* argv[]) {
@@ -99,10 +117,10 @@ int main(int argc, char* argv[]) {
     glutInitWindowPosition(0, 0);
     glutCreateWindow("test");
     glutDisplayFunc(onDisplay);
-    glutReshapeFunc(onReshape);
+    //    glutReshapeFunc(onReshape);
     glutMotionFunc(onDrag);
     glutPassiveMotionFunc(onMouseMove);
-    glutKeyboardFunc(onKey);
+    //    glutKeyboardFunc(onKey);
     glutMouseFunc(onMouse);
     init();
     glutMainLoop();
